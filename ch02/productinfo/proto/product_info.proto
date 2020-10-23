@@ -1,15 +1,39 @@
 syntax = "proto3";
-
+import "google/protobuf/descriptor.proto";
 package ecommerce;
 
+option go_package = ".;ecommerce";
+
+extend google.protobuf.FieldOptions {
+    bool sensitive = 50000;
+}
+
+extend google.protobuf.MethodOptions {
+    int32 throttling_tier_per_min = 50001;
+    string scopes = 50002;
+}
+
+extend google.protobuf.ServiceOptions {
+    OAuth2Provider oauth2Provider = 50003;
+}
+
+message OAuth2Provider {
+    string url = 5001;
+}
+
 service ProductInfo {
-    rpc addProduct(Product) returns (ProductID);
-    rpc getProduct(ProductID) returns (Product);
+    option(oauth2Provider) = "https://localhost:9095/oauth2/token/introspect";
+
+    rpc AddProduct(Product) returns (ProductID) {
+        option(throttling_tier_per_min) = 10000;
+        option(scopes) = "scope1,scope2";
+    }
+    rpc GetProduct(ProductID) returns (Product);
 }
 
 message Product {
     string id = 1;
-    string name = 2;
+    string name = 2 [(ecommerce.sensitive) = true];
     string description = 3;
     float price = 4;
 }
